@@ -8,15 +8,14 @@ try:
 	import Tkinter as tk
 	import ttk
 	from tkFileDialog import askopenfile
-	def convert(data): # python 2 converter
-		return ' '.join(format(ord(char), '0>2X') for char in data)
+	from itertools import imap
+	python2 = True
 	print("python2 detected")
 except ImportError:
 	import tkinter as tk
 	from tkinter import ttk
 	from tkinter.filedialog import askopenfile
-	def convert(data):# python 3 converter
-		return ' '.join(format(char, '0>2X') for char in data)
+	python2 = False
 	print("python3 detected")
 
 class ScrolledText(tk.Frame):
@@ -32,10 +31,20 @@ class ScrolledText(tk.Frame):
 		hsb = tk.Scrollbar(self, orient='horizontal', command=self.txt.xview)
 		hsb.grid(row=1, column=0, sticky='ew')
 		self.txt.config(xscrollcommand=hsb.set)
+		self.txt.tag_config("odd_row", foreground="blue")
 
-	def set(self, text):
-		self.txt.delete('0.0', tk.END)
-		self.txt.insert('0.0', text)
+	def set(self, data):
+		'''data needs to be a 2D iter of integers'''
+		self.txt.delete(1.0, tk.END)
+		for line in data:
+			for idx, char in enumerate(line):
+				char = "{:0>2X} ".format(char)
+				if idx%2:
+					self.txt.insert(tk.CURRENT, char)
+				else:
+					self.txt.insert(tk.CURRENT, char, 'odd_row')
+			self.txt.delete(tk.CURRENT+"-1c") # delete the trailing space
+			self.txt.insert(tk.CURRENT, '\n')
 
 class GUI(tk.Frame):
 	def __init__(self, master=None, **kwargs):
@@ -72,7 +81,9 @@ class GUI(tk.Frame):
 		if width < 1:
 			return 'Must be 1 or greater'
 		chunks = (self.data[i:i+width] for i in range(0,len(self.data),width))
-		self.txt.set('\n'.join(map(convert, chunks)))
+		if python2: # python2 needs to cast to integers
+			chunks = (imap(ord, chunk) for chunk in chunks)
+		self.txt.set(chunks)
 
 	def load_file(self, *args):
 		f = askopenfile('rb')
