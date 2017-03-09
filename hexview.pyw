@@ -32,11 +32,15 @@ class ScrolledText(tk.Frame):
 		hsb.grid(row=1, column=0, sticky='ew')
 		self.txt.config(xscrollcommand=hsb.set)
 		self.txt.tag_config("odd_row", foreground="blue")
+		self.txt.tag_config("line_num", foreground="red")
 
-	def set(self, data):
+	def set(self, data, width, length):
 		'''data needs to be a 2D iter of integers'''
 		self.txt.delete(1.0, tk.END)
-		for line in data:
+		num_width = len(hex(length))-2
+		for line_idx, line in enumerate(data):
+			line_num =  "{:0>{pad}X} | ".format(line_idx*width, pad=num_width)
+			self.txt.insert(tk.CURRENT, line_num, 'line_num')
 			for idx, char in enumerate(line):
 				char = "{:0>2X} ".format(char)
 				if idx%2:
@@ -83,7 +87,7 @@ class GUI(tk.Frame):
 		chunks = (self.data[i:i+width] for i in range(0,len(self.data),width))
 		if python2: # python2 needs to cast to integers
 			chunks = (imap(ord, chunk) for chunk in chunks)
-		self.txt.set(chunks)
+		self.txt.set(chunks, width, len(self.data))
 
 	def load_file(self, *args):
 		f = askopenfile('rb')
