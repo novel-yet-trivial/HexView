@@ -87,6 +87,8 @@ class GUI(tk.Frame):
 		self.txt = ScrolledText(self)
 		self.txt.pack(fill=tk.BOTH, expand=True)
 
+		self.load_file()
+
 	def chg_width(self, *args):
 		self.status.set(self._chg_width() or '')
 
