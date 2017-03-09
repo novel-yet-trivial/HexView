@@ -39,8 +39,9 @@ class ScrolledText(tk.Frame):
 		self.txt.delete(1.0, tk.END)
 		num_width = len(hex(length))-2
 		for line_idx, line in enumerate(data):
-			line_num =  "{:0>{pad}X} | ".format(line_idx*width, pad=num_width)
+			line_num =  "{:0>{pad}X}".format(line_idx*width, pad=num_width)
 			self.txt.insert(tk.CURRENT, line_num, 'line_num')
+			self.txt.insert(tk.CURRENT, " | ")
 			for idx, char in enumerate(line):
 				char = "{:0>2X} ".format(char)
 				if idx%2:
