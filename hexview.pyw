@@ -74,10 +74,10 @@ class GUI(tk.Frame):
 		return ''
 
 	def load_file(self, *args):
-		f = askopenfile('rb')
-		if f is not None:
-			self.data = f.read()
-			self.chg_width()
+		with askopenfile('rb') as f:
+			if f is not None:
+				self.data = f.read()
+		self.chg_width()
 
 def main():
 	root = tk.Tk()
