@@ -17,31 +17,52 @@ except ImportError:
 	from tkinter.filedialog import askopenfile
 	python2 = False
 	print("python3 detected")
+from functools import partial
+
+def multiple(func_list, *args, **kwargs):
+	'''run multiple functions as one'''
+	for func in func_list:
+		func(*args, **kwargs)
+
+def scroll_to_view(scroll_set, view_func_list, start, end):
+	''' Allows one widget to control the scroll bar and other widgets
+	scroll set: the scrollbar set function
+	view_func_list: list of other widget's view functions
+	'''
+	scroll_set(start, end)
+	for func in view_func_list:
+		func('moveto', start)
 
 class ScrolledText(tk.Frame):
 	def __init__(self, master=None, **kwargs):
 		tk.Frame.__init__(self, master, **kwargs)
 		self.columnconfigure(0, weight=1)
 		self.rowconfigure(0, weight=1)
+		self.lines = tk.Text(self, width=4, wrap='none')
+		self.lines.grid(row=0, column=0, sticky='nsew')
 		self.txt = tk.Text(self, wrap='none')
-		self.txt.grid(row=0, column=0, sticky='nsew')
-		vsb = tk.Scrollbar(self, command=self.txt.yview)
-		vsb.grid(row=0, column=1, sticky='ns')
-		self.txt.config(yscrollcommand=vsb.set)
+		self.txt.grid(row=0, column=1, sticky='nsew')
+		vsb = tk.Scrollbar(self, command=partial(multiple, (self.txt.yview, self.lines.yview)))
+		vsb.grid(row=0, column=2, sticky='ns')
+		self.txt.config(yscrollcommand=partial(scroll_to_view, vsb.set, (self.lines.yview,)))
+		self.lines.config(yscrollcommand=partial(scroll_to_view, vsb.set, (self.txt.yview,)))
 		hsb = tk.Scrollbar(self, orient='horizontal', command=self.txt.xview)
-		hsb.grid(row=1, column=0, sticky='ew')
+		hsb.grid(row=1, column=1, sticky='ew')
 		self.txt.config(xscrollcommand=hsb.set)
 		self.txt.tag_config("odd_row", foreground="blue")
-		self.txt.tag_config("line_num", foreground="red")
+		self.lines.tag_config("line_num", foreground="red")
+
+	def set_lines(self, width, length):
+		self.lines.delete(1.0, tk.END)
+		num_width = len(hex(length))-2
+		self.lines.config(width=num_width)
+		self.lines.insert(1.0, '\n'.join("{:0>{pad}X}".format(i, pad=num_width) for i in range(0, length, width)), 'line_num')
 
 	def set_with_color(self, data, width, length):
 		'''data needs to be a 2D iter of integers'''
+		self.set_lines(width, length)
 		self.txt.delete(1.0, tk.END)
-		num_width = len(hex(length))-2
 		for line_idx, line in enumerate(data):
-			line_num =  "{:0>{pad}X}".format(line_idx*width, pad=num_width)
-			self.txt.insert(tk.CURRENT, line_num, 'line_num')
-			self.txt.insert(tk.CURRENT, " | ")
 			for idx, char in enumerate(line):
 				char = "{:0>2X} ".format(char)
 				if idx%2:
@@ -50,16 +71,15 @@ class ScrolledText(tk.Frame):
 					self.txt.insert(tk.CURRENT, char, 'odd_row')
 			self.txt.delete(tk.CURRENT+"-1c") # delete the trailing space
 			self.txt.insert(tk.CURRENT, '\n')
+		self.txt.delete(tk.CURRENT+"-1c") # delete the trailing newline
 
 	def set(self, data, width, length):
 		'''data needs to be a 2D iter of integers'''
+		self.set_lines(width, length)
 		self.txt.delete(1.0, tk.END)
-		num_width = len(hex(length))-2
 		output = []
 		for line_idx, line in enumerate(data):
-			line = tuple(line)
-			template = "{:0>{pad}X} | " + " ".join(["{:0>2X}"]*len(line))
-			output.append(template.format(line_idx*width, *line, pad=num_width))
+			output.append(" ".join(format(c, '0>2X') for c in line))
 		self.txt.insert(tk.CURRENT, '\n'.join(output))
 
 class GUI(tk.Frame):
@@ -88,7 +108,10 @@ class GUI(tk.Frame):
 		self.txt = ScrolledText(self)
 		self.txt.pack(fill=tk.BOTH, expand=True)
 
-		self.load_file()
+		#~ self.load_file()
+		self.load_file(fn='.gitignore')
+		#~ self.color.set(True)
+		self.width.set(16)
 
 	def chg_width(self, *args):
 		self.status.set(self._chg_width() or '')
@@ -110,8 +133,11 @@ class GUI(tk.Frame):
 		else:
 			self.txt.set(chunks, width, len(self.data))
 
-	def load_file(self, *args):
-		f = askopenfile('rb')
+	def load_file(self, fn=None, *args):
+		if fn is not None:
+			f = open(fn, 'rb')
+		else:
+			f = askopenfile('rb')
 		if f is not None:
 			self.data = f.read()
 			f.close()
