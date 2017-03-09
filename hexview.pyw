@@ -134,6 +134,7 @@ class GUI(tk.Frame):
 			self.txt.set(chunks, width, len(self.data))
 
 	def load_file(self, fn=None, *args):
+		self.master.withdraw()
 		if fn is not None:
 			f = open(fn, 'rb')
 		else:
@@ -142,6 +143,7 @@ class GUI(tk.Frame):
 			self.data = f.read()
 			f.close()
 		self.chg_width()
+		self.master.deiconify()
 
 def main():
 	root = tk.Tk()
