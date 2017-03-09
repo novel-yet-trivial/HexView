@@ -34,7 +34,7 @@ class ScrolledText(tk.Frame):
 		self.txt.tag_config("odd_row", foreground="blue")
 		self.txt.tag_config("line_num", foreground="red")
 
-	def set(self, data, width, length):
+	def set_with_color(self, data, width, length):
 		'''data needs to be a 2D iter of integers'''
 		self.txt.delete(1.0, tk.END)
 		num_width = len(hex(length))-2
@@ -49,6 +49,17 @@ class ScrolledText(tk.Frame):
 					self.txt.insert(tk.CURRENT, char, 'odd_row')
 			self.txt.delete(tk.CURRENT+"-1c") # delete the trailing space
 			self.txt.insert(tk.CURRENT, '\n')
+
+	def set(self, data, width, length):
+		'''data needs to be a 2D iter of integers'''
+		self.txt.delete(1.0, tk.END)
+		num_width = len(hex(length))-2
+		output = []
+		for line_idx, line in enumerate(data):
+			line = tuple(line)
+			template = "{:0>{pad}X} | " + " ".join(["{:0>2X}"]*len(line))
+			output.append(template.format(line_idx*width, *line, pad=num_width))
+		self.txt.insert(tk.CURRENT, '\n'.join(output))
 
 class GUI(tk.Frame):
 	def __init__(self, master=None, **kwargs):
@@ -68,6 +79,10 @@ class GUI(tk.Frame):
 		ttk.Style().configure('red.TLabel', foreground='red')
 		lbl = ttk.Label(btn_frame, style='red.TLabel', textvariable=self.status)
 		lbl.pack(side=tk.LEFT)
+		self.color = tk.IntVar(self, False)
+		self.color.trace('w', self.chg_width)
+		ckbx = tk.Checkbutton(btn_frame, text='Color', variable=self.color)
+		ckbx.pack(side=tk.LEFT)
 
 		self.txt = ScrolledText(self)
 		self.txt.pack(fill=tk.BOTH, expand=True)
@@ -87,7 +102,10 @@ class GUI(tk.Frame):
 		chunks = (self.data[i:i+width] for i in range(0,len(self.data),width))
 		if python2: # python2 needs to cast to integers
 			chunks = (imap(ord, chunk) for chunk in chunks)
-		self.txt.set(chunks, width, len(self.data))
+		if self.color.get():
+			self.txt.set_with_color(chunks, width, len(self.data))
+		else:
+			self.txt.set(chunks, width, len(self.data))
 
 	def load_file(self, *args):
 		f = askopenfile('rb')
