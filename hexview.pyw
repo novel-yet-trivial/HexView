@@ -147,7 +147,7 @@ class GUI(tk.Frame):
 
 def main():
 	root = tk.Tk()
-	root.title('computerforensicsGWU rules!')
+	root.title('PyHexView')
 	win = GUI(root)
 	win.pack(fill=tk.BOTH, expand=True)
 	root.mainloop()
