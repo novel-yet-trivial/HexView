@@ -20,8 +20,8 @@ except ImportError:
 
 def multiple(*func_list):
 	'''run multiple functions as one'''
-	#god this is ugly
-	return lambda *args, **kw: [func(*args, **kw) for func in func_list]
+	# I can't decide if this is ugly or pretty
+	return lambda *args, **kw: [func(*args, **kw) for func in func_list]; None
 
 def scroll_to_view(scroll_set, *view_funcs):
 	''' Allows one widget to control the scroll bar and other widgets
@@ -63,7 +63,6 @@ class ScrolledText(tk.Frame):
 		self.lines.insert(1.0, '\n'.join(line_nums), 'line_num')
 
 	def set_with_color(self, data, width, length):
-		'''data needs to be a 2D iter of integers'''
 		self.set_lines(width, length)
 		self.txt.delete(1.0, tk.END)
 		for line_idx, line in enumerate(data):
