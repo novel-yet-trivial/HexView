@@ -60,7 +60,7 @@ class GUI(tk.Frame):
 		self.txt.pack(fill=tk.BOTH, expand=True)
 
 	def chg_width(self, *args):
-		self.status.set(self._chg_width())
+		self.status.set(self._chg_width() or '')
 
 	def _chg_width(self):
 		if self.data is None:
@@ -68,10 +68,11 @@ class GUI(tk.Frame):
 		try:
 			width = self.width.get()
 		except (ValueError, tk.TclError):
-			return 'Not a valid int'
+			return 'Not a valid integer'
+		if width < 1:
+			return 'Must be 1 or greater'
 		chunks = (self.data[i:i+width] for i in range(0,len(self.data),width))
 		self.txt.set('\n'.join(map(convert, chunks)))
-		return ''
 
 	def load_file(self, *args):
 		f = askopenfile('rb')
