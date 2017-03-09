@@ -72,7 +72,7 @@ class ScrolledText(tk.Frame):
 					self.txt.insert(tk.CURRENT, char)
 				else:
 					self.txt.insert(tk.CURRENT, char, 'odd_row')
-			self.txt.delete(tk.CURRENT+"-%dc"%len(sep)) # delete the trailing space
+			self.txt.delete(tk.CURRENT+"-%dc"%len(sep), tk.END) # delete the trailing separator
 			self.txt.insert(tk.CURRENT, '\n')
 		self.txt.delete(tk.CURRENT+"-1c") # delete the trailing newline
 
