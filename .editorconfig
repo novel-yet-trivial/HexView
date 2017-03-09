@@ -1,2 +1,3 @@
+[*.{py,pyw}]
 indent_style = tab
 indent_size = 4
