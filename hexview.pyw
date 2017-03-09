@@ -62,27 +62,27 @@ class ScrolledText(tk.Frame):
 		line_nums = ("{:0>{pad}X}".format(i, pad=num_width) for i in range(0, length, width))
 		self.lines.insert(1.0, '\n'.join(line_nums), 'line_num')
 
-	def set_with_color(self, data, width, length):
+	def set_with_color(self, data, width, length, sep=" "):
 		self.set_lines(width, length)
 		self.txt.delete(1.0, tk.END)
 		for line_idx, line in enumerate(data):
 			for idx, char in enumerate(line):
-				char = "{:0>2X} ".format(char)
+				char = "{:0>2X}{}".format(char, sep)
 				if idx%2:
 					self.txt.insert(tk.CURRENT, char)
 				else:
 					self.txt.insert(tk.CURRENT, char, 'odd_row')
-			self.txt.delete(tk.CURRENT+"-1c") # delete the trailing space
+			self.txt.delete(tk.CURRENT+"-%dc"%len(sep)) # delete the trailing space
 			self.txt.insert(tk.CURRENT, '\n')
 		self.txt.delete(tk.CURRENT+"-1c") # delete the trailing newline
 
-	def set(self, data, width, length):
+	def set(self, data, width, length, sep=" "):
 		'''data needs to be a 2D iter of integers'''
 		self.set_lines(width, length)
 		self.txt.delete(1.0, tk.END)
 		output = []
 		for line_idx, line in enumerate(data):
-			output.append(" ".join(format(c, '0>2X') for c in line))
+			output.append(sep.join(format(c, '0>2X') for c in line))
 		self.txt.insert(tk.CURRENT, '\n'.join(output))
 
 class GUI(tk.Frame):
@@ -107,6 +107,10 @@ class GUI(tk.Frame):
 		self.color.trace('w', self.chg_width)
 		ckbx = tk.Checkbutton(btn_frame, text='Color', variable=self.color)
 		ckbx.pack(side=tk.LEFT)
+		self.space = tk.IntVar(self, True)
+		self.space.trace('w', self.chg_width)
+		ckbx = tk.Checkbutton(btn_frame, text='Space', variable=self.space)
+		ckbx.pack(side=tk.LEFT)
 
 		self.txt = ScrolledText(self)
 		self.txt.pack(fill=tk.BOTH, expand=True)
@@ -128,10 +132,11 @@ class GUI(tk.Frame):
 		chunks = (self.data[i:i+width] for i in range(0,len(self.data),width))
 		if python2: # python2 needs to cast to integers
 			chunks = (imap(ord, chunk) for chunk in chunks)
+		sep = " " if self.space.get() else ""
 		if self.color.get():
-			self.txt.set_with_color(chunks, width, len(self.data))
+			self.txt.set_with_color(chunks, width, len(self.data), sep)
 		else:
-			self.txt.set(chunks, width, len(self.data))
+			self.txt.set(chunks, width, len(self.data), sep)
 
 	def load_file(self, fn=None, *args):
 		self.master.withdraw()
